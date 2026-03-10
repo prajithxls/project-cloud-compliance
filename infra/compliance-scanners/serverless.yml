@@ -1,0 +1,245 @@
+service: compliance-scanners
+
+provider:
+  name: aws
+  runtime: python3.9
+  region: ap-south-1
+  environment:
+    FINDINGS_TABLE: Findings
+  iamRoleStatements:
+    - Effect: Allow
+      Action:
+        - dynamodb:PutItem
+        - dynamodb:DeleteItem
+        - dynamodb:DescribeTable
+        - dynamodb:Scan
+      Resource: "*"
+
+    - Effect: Allow
+      Action:
+        - s3:ListAllMyBuckets
+        - s3:ListAllMyBuckets
+        - s3:GetBucketAcl
+        - s3:GetBucketPolicy
+        - s3:GetBucketEncryption
+        - s3:GetBucketPublicAccessBlock
+        - s3:GetBucketLocation
+        - s3:GetBucketVersioning
+        - s3:GetBucketLogging
+        - s3:PutObject
+        - s3:DeleteObject
+      Resource: "*"
+
+    - Effect: Allow
+      Action:
+        - ec2:DescribeInstances
+        - ec2:DescribeSecurityGroups
+      Resource: "*"
+
+    - Effect: Allow
+      Action:
+        - lambda:InvokeFunction
+      Resource: "*"
+
+    - Effect: Allow
+      Action:
+        - iam:ListUsers
+        - iam:ListAccessKeys
+        - iam:GetLoginProfile
+        - iam:ListMFADevices
+        - iam:ListRoles
+        - iam:ListAttachedRolePolicies
+        - iam:ListAttachedRolePolicies
+        - iam:ListRolePolicies
+      Resource: "*"
+
+    - Effect: Allow
+      Action:
+        - lambda:ListFunctions
+        - lambda:GetFunction
+        - lambda:GetFunctionConcurrency
+        - lambda:GetPolicy
+        - lambda:ListTags
+      Resource: "*"
+
+functions:
+
+  scanAll:
+    handler: lambdas/scan_all/app.lambda_handler
+    timeout: 28
+    environment:
+      FINDINGS_TABLE: Findings
+      S3_SCANNER_FUNCTION: compliance-scanners-dev-s3Scanner
+      EC2_SCANNER_FUNCTION: compliance-scanners-dev-ec2Scanner
+      IAM_SCANNER_FUNCTION: compliance-scanners-dev-iamScanner
+      LAMBDA_SCANNER_FUNCTION: compliance-scanners-dev-lambdaScanner
+    events:
+      - http:
+          path: scan
+          method: get
+          cors:
+            origin: '*'
+            headers:
+              - Content-Type
+              - X-Amz-Date
+              - Authorization
+              - X-Api-Key
+              - X-Amz-Security-Token
+            allowCredentials: false
+            methods:
+              - GET
+              - OPTIONS
+
+  testLambda:
+    handler: handler.hello
+    events:
+      - http:
+          path: test
+          method: get
+          cors:
+            origin: '*'
+            headers:
+              - Content-Type
+              - X-Amz-Date
+              - Authorization
+              - X-Api-Key
+              - X-Amz-Security-Token
+            allowCredentials: false
+            methods:
+              - GET
+              - OPTIONS
+
+  s3Scanner:
+    handler: lambdas/s3_check/app.lambda_handler
+    environment:
+      FINDINGS_TABLE: Findings
+    events:
+      - http:
+          path: scan/s3
+          method: get
+          cors:
+            origin: '*'
+            headers:
+              - Content-Type
+              - X-Amz-Date
+              - Authorization
+              - X-Api-Key
+              - X-Amz-Security-Token
+            allowCredentials: false
+            methods:
+              - GET
+              - OPTIONS
+
+  ec2Scanner:
+    handler: lambdas/ec2_check/app.lambda_handler
+    environment:
+      FINDINGS_TABLE: Findings
+    events:
+      - http:
+          path: scan/ec2
+          method: get
+          cors:
+            origin: '*'
+            headers:
+              - Content-Type
+              - X-Amz-Date
+              - Authorization
+              - X-Api-Key
+              - X-Amz-Security-Token
+            allowCredentials: false
+            methods:
+              - GET
+              - OPTIONS
+
+  iamScanner:
+    handler: lambdas/iam_check/app.lambda_handler
+    environment:
+      FINDINGS_TABLE: Findings
+    events:
+      - http:
+          path: scan/iam
+          method: get
+          cors:
+            origin: '*'
+            headers:
+              - Content-Type
+              - X-Amz-Date
+              - Authorization
+              - X-Api-Key
+              - X-Amz-Security-Token
+            allowCredentials: false
+            methods:
+              - GET
+              - OPTIONS
+
+  lambdaScanner:
+    handler: lambdas/lambda_check/app.lambda_handler
+    environment:
+      FINDINGS_TABLE: Findings
+    events:
+      - http:
+          path: scan/lambda
+          method: get
+          cors:
+            origin: '*'
+            headers:
+              - Content-Type
+              - X-Amz-Date
+              - Authorization
+              - X-Api-Key
+              - X-Amz-Security-Token
+            allowCredentials: false
+            methods:
+              - GET
+              - OPTIONS
+
+  getFindings:
+    handler: lambdas/get_findings/app.lambda_handler
+    environment:
+      FINDINGS_TABLE: Findings
+      CSV_BUCKET: csv-output-buckett
+    events:
+      - http:
+          path: findings
+          method: get
+          cors:
+            origin: '*'
+            headers:
+              - Content-Type
+              - X-Amz-Date
+              - Authorization
+              - X-Api-Key
+              - X-Amz-Security-Token
+            allowCredentials: false
+            methods:
+              - GET
+              - OPTIONS
+      - http:
+          path: refresh
+          method: get
+          cors:
+            origin: '*'
+            headers:
+              - Content-Type
+              - X-Amz-Date
+              - Authorization
+              - X-Api-Key
+              - X-Amz-Security-Token
+            allowCredentials: false
+            methods:
+              - GET
+              - OPTIONS
+
+resources:
+  Resources:
+    FindingsTable:
+      Type: AWS::DynamoDB::Table
+      Properties:
+        TableName: Findings
+        AttributeDefinitions:
+          - AttributeName: findingId
+            AttributeType: S
+        KeySchema:
+          - AttributeName: findingId
+            KeyType: HASH
+        BillingMode: PAY_PER_REQUEST
