@@ -81,7 +81,7 @@ export default function ComplianceScore({ findings }) {
               color,
               lineHeight: 1,
             }}>
-              {score}
+              {score === 0 ? "0" : score}
             </div>
             <div style={{
               fontFamily: "var(--font-mono)",
