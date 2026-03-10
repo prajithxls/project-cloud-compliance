@@ -1,29 +1,60 @@
 import React from "react";
-import { timeAgo } from "../../utils/helpers";
 
-export default function Topbar({ scanning, lastUpdated }) {
+export default function Topbar({ scanning, lastUpdated, user, onSignOut }) {
   return (
     <header className="topbar">
-      <div style={{ display: "flex", alignItems: "center", flex: 1 }}>
-        <div style={{
-          fontFamily: "var(--font-display)",
-          fontWeight: 800,
-          fontSize: 16,
-          color: "var(--text-primary)",
-          letterSpacing: "-0.3px",
-          whiteSpace: "nowrap",
-        }}>
-          Cloud Security Compliance and Audit Management System
-        </div>
+      <div className="topbar-title">
+        Cloud Security Compliance and Audit Management System
       </div>
-
-      <div className="topbar-status">
-        <div className={`status-dot ${scanning ? "scanning" : ""}`} />
-        {scanning
-          ? "SCANNING..."
-          : lastUpdated
-          ? `LAST SYNC ${timeAgo(lastUpdated).toUpperCase()}`
-          : "READY"}
+      <div style={{ display: "flex", alignItems: "center", gap: 16 }}>
+        {scanning && (
+          <div style={{ display: "flex", alignItems: "center", gap: 8, fontFamily: "var(--font-mono)", fontSize: 11, color: "var(--accent-cyan)" }}>
+            <div className="spinner" style={{ width: 12, height: 12 }} />
+            SCANNING
+          </div>
+        )}
+        {lastUpdated && !scanning && (
+          <div style={{ fontFamily: "var(--font-mono)", fontSize: 10, color: "var(--text-muted)" }}>
+            Updated {lastUpdated.toLocaleTimeString()}
+          </div>
+        )}
+        {user && (
+          <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+            <div style={{
+              fontFamily: "var(--font-mono)",
+              fontSize: 11,
+              color: "var(--text-secondary)",
+              background: "var(--bg-elevated)",
+              border: "1px solid var(--border)",
+              borderRadius: "var(--radius-md)",
+              padding: "4px 10px",
+              maxWidth: 180,
+              overflow: "hidden",
+              textOverflow: "ellipsis",
+              whiteSpace: "nowrap",
+            }}>
+              {user.email}
+            </div>
+            <button
+              onClick={onSignOut}
+              style={{
+                fontFamily: "var(--font-mono)",
+                fontSize: 11,
+                color: "var(--text-muted)",
+                background: "transparent",
+                border: "1px solid var(--border)",
+                borderRadius: "var(--radius-md)",
+                padding: "4px 10px",
+                cursor: "pointer",
+                transition: "color 0.15s, border-color 0.15s",
+              }}
+              onMouseEnter={e => { e.target.style.color = "var(--critical)"; e.target.style.borderColor = "var(--critical)"; }}
+              onMouseLeave={e => { e.target.style.color = "var(--text-muted)"; e.target.style.borderColor = "var(--border)"; }}
+            >
+              Sign Out
+            </button>
+          </div>
+        )}
       </div>
     </header>
   );
