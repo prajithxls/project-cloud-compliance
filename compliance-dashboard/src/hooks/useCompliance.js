@@ -1,20 +1,25 @@
-import { useState, useEffect, useCallback } from "react";
+import { useState, useCallback } from "react";
 import { getFindings, runScan } from "../services/api";
 
+// Findings are NOT auto-fetched on mount.
+// They are only fetched after a scan completes, scoped to the target accountId.
 export function useFindings() {
-  const [findings, setFindings] = useState([]);
-  const [loading, setLoading] = useState(false);
-  const [error, setError] = useState(null);
-  const [lastUpdated, setLastUpdated] = useState(null);
+  const [findings,     setFindings]     = useState([]);
+  const [loading,      setLoading]      = useState(false);
+  const [error,        setError]        = useState(null);
+  const [lastUpdated,  setLastUpdated]  = useState(null);
+  const [scannedAccountId, setScannedAccountId] = useState(null);
 
-  const fetch = useCallback(async () => {
+  const fetch = useCallback(async (accountId) => {
+    if (!accountId) return;
     setLoading(true);
     setError(null);
     try {
-      const res = await getFindings();
-      const data = res.data;
+      const res   = await getFindings(accountId);
+      const data  = res.data;
       const items = Array.isArray(data) ? data : data.findings || [];
       setFindings(items);
+      setScannedAccountId(accountId);
       setLastUpdated(new Date());
     } catch (err) {
       setError(err.message);
@@ -23,28 +28,41 @@ export function useFindings() {
     }
   }, []);
 
-  useEffect(() => { fetch(); }, [fetch]);
+  // Clear all findings state (called on logout or before a new scan)
+  const clearFindings = useCallback(() => {
+    setFindings([]);
+    setScannedAccountId(null);
+    setLastUpdated(null);
+    setError(null);
+  }, []);
 
-  return { findings, loading, error, lastUpdated, refetch: fetch };
+  return { findings, loading, error, lastUpdated, scannedAccountId, refetch: fetch, clearFindings };
 }
 
 export function useScan(onSuccess) {
-  const [scanning, setScanning] = useState(false);
-  const [scanLog, setScanLog] = useState([]);
+  const [scanning,  setScanning]  = useState(false);
+  const [scanLog,   setScanLog]   = useState([]);
 
   const log = (msg, type = "info") => {
     const time = new Date().toLocaleTimeString();
     setScanLog((prev) => [...prev, { time, msg, type }]);
   };
 
-  const triggerScan = useCallback(async () => {
+  // accountId is required — always a cross-account scan
+  const triggerScan = useCallback(async (accountId) => {
+    if (!accountId || accountId.length !== 12) {
+      throw new Error("A valid 12-digit target account ID is required.");
+    }
+
     setScanning(true);
     setScanLog([]);
-    log("Initiating compliance scan...", "info");
+
+    log(`Initiating cross-account scan for account ${accountId}...`, "info");
+    log("Assuming CrossAccountComplianceRole via STS...", "info");
 
     try {
       log("Connecting to AWS Lambda scanner...", "info");
-      await runScan();
+      await runScan(accountId);
       log("Scan dispatched successfully.", "ok");
       log("Evaluating S3 bucket policies...", "info");
       await new Promise((r) => setTimeout(r, 1000));
@@ -60,9 +78,10 @@ export function useScan(onSuccess) {
       log("Lambda function configurations evaluated.", "ok");
       await new Promise((r) => setTimeout(r, 400));
       log("Scan complete. Refreshing findings...", "info");
-      if (onSuccess) onSuccess();
+      if (onSuccess) onSuccess(accountId);
     } catch (err) {
       log(`Scan failed: ${err.message}`, "warn");
+      throw err;
     } finally {
       setScanning(false);
     }
@@ -73,20 +92,23 @@ export function useScan(onSuccess) {
 
 export function usePagination(items, pageSize = 15) {
   const [page, setPage] = useState(1);
-  const totalPages = Math.max(1, Math.ceil(items.length / pageSize));
-  const currentPage = Math.min(page, totalPages);
-  const start = (currentPage - 1) * pageSize;
-  const paginated = items.slice(start, start + pageSize);
-  return { page: currentPage, setPage, totalPages, paginated, total: items.length, start, end: Math.min(start + pageSize, items.length) };
+  const totalPages      = Math.max(1, Math.ceil(items.length / pageSize));
+  const currentPage     = Math.min(page, totalPages);
+  const start           = (currentPage - 1) * pageSize;
+  const paginated       = items.slice(start, start + pageSize);
+  return {
+    page: currentPage, setPage, totalPages, paginated,
+    total: items.length, start, end: Math.min(start + pageSize, items.length),
+  };
 }
 
 export function useFilter(findings) {
-  const [search, setSearch] = useState("");
+  const [search,        setSearch]        = useState("");
   const [severityFilter, setSeverityFilter] = useState("ALL");
-  const [statusFilter, setStatusFilter] = useState("ALL");
+  const [statusFilter,  setStatusFilter]  = useState("ALL");
   const [scannerFilter, setScannerFilter] = useState("ALL");
-  const [sortKey, setSortKey] = useState("timestamp");
-  const [sortDir, setSortDir] = useState("desc");
+  const [sortKey,       setSortKey]       = useState("timestamp");
+  const [sortDir,       setSortDir]       = useState("desc");
 
   const toggleSort = (key) => {
     if (sortKey === key) setSortDir((d) => (d === "asc" ? "desc" : "asc"));
@@ -96,15 +118,15 @@ export function useFilter(findings) {
   const filtered = findings
     .filter((f) => {
       if (severityFilter !== "ALL" && f.severity !== severityFilter) return false;
-      if (statusFilter !== "ALL" && f.status !== statusFilter) return false;
-      if (scannerFilter !== "ALL" && f.scanner !== scannerFilter) return false;
+      if (statusFilter   !== "ALL" && f.status   !== statusFilter)   return false;
+      if (scannerFilter  !== "ALL" && f.scanner  !== scannerFilter)  return false;
       if (search) {
         const q = search.toLowerCase();
         return (
-          f.title?.toLowerCase().includes(q) ||
-          f.resourceId?.toLowerCase().includes(q) ||
+          f.title?.toLowerCase().includes(q)        ||
+          f.resourceId?.toLowerCase().includes(q)   ||
           f.resourceType?.toLowerCase().includes(q) ||
-          f.findingId?.toLowerCase().includes(q) ||
+          f.findingId?.toLowerCase().includes(q)    ||
           f.accountId?.toLowerCase().includes(q)
         );
       }
@@ -114,11 +136,17 @@ export function useFilter(findings) {
       let va = a[sortKey] ?? "", vb = b[sortKey] ?? "";
       if (sortKey === "riskScore") { va = parseFloat(va) || 0; vb = parseFloat(vb) || 0; }
       if (va < vb) return sortDir === "asc" ? -1 : 1;
-      if (va > vb) return sortDir === "asc" ? 1 : -1;
+      if (va > vb) return sortDir === "asc" ?  1 : -1;
       return 0;
     });
 
-  return { filtered, search, setSearch, severityFilter, setSeverityFilter, statusFilter, setStatusFilter, scannerFilter, setScannerFilter, sortKey, sortDir, toggleSort };
+  return {
+    filtered, search, setSearch,
+    severityFilter, setSeverityFilter,
+    statusFilter,   setStatusFilter,
+    scannerFilter,  setScannerFilter,
+    sortKey, sortDir, toggleSort,
+  };
 }
 
 export function useToast() {
@@ -128,6 +156,9 @@ export function useToast() {
     setToasts((prev) => [...prev, { id, message, type }]);
     setTimeout(() => setToasts((prev) => prev.filter((t) => t.id !== id)), duration);
   }, []);
-  const removeToast = useCallback((id) => setToasts((prev) => prev.filter((t) => t.id !== id)), []);
+  const removeToast = useCallback(
+    (id) => setToasts((prev) => prev.filter((t) => t.id !== id)),
+    []
+  );
   return { toasts, addToast, removeToast };
 }

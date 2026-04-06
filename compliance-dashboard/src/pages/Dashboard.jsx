@@ -5,54 +5,85 @@ import SeverityDonut from "../components/charts/SeverityDonut";
 import ScannerBarChart from "../components/charts/ScannerBarChart";
 import ComplianceScore from "../components/charts/ComplianceScore";
 
-export default function Dashboard({ findings, loading, scanning, onScan }) {
+export default function Dashboard({ findings, loading, scanning, scannedAccountId }) {
   const navigate = useNavigate();
   const stats = computeStats(findings);
 
   const statCards = [
-    { cls: "total", label: "Total Findings", value: stats.total },
-    { cls: "critical", label: "Critical", value: stats.CRITICAL },
-    { cls: "high", label: "High", value: stats.HIGH },
-    { cls: "medium", label: "Medium", value: stats.MEDIUM },
-    { cls: "low", label: "Low", value: stats.LOW },
+    { cls: "total",    label: "Total Findings", value: stats.total },
+    { cls: "critical", label: "Critical",        value: stats.CRITICAL },
+    { cls: "high",     label: "High",            value: stats.HIGH },
+    { cls: "medium",   label: "Medium",          value: stats.MEDIUM },
+    { cls: "low",      label: "Low",             value: stats.LOW },
   ];
 
   return (
     <div>
-      {/* Page Header */}
+      {/* Page Header — no scan button */}
       <div className="page-header">
         <div>
           <div className="page-title">Security Dashboard</div>
           <div className="page-title-sub">
             Cloud Compliance &amp; Audit Overview · AWS ap-south-1
+            {scannedAccountId && (
+              <span style={{
+                marginLeft: 12,
+                fontFamily: "var(--font-mono)",
+                fontSize: 11,
+                color: "var(--accent-cyan)",
+                background: "var(--bg-elevated)",
+                border: "1px solid var(--accent-cyan)33",
+                padding: "2px 10px",
+                borderRadius: "20px",
+              }}>
+                Account: {scannedAccountId}
+              </span>
+            )}
           </div>
         </div>
-        <div style={{ display: "flex", gap: 10 }}>
-          <button className="btn btn-secondary" onClick={() => navigate("/findings")}>
-            View All Findings
-          </button>
-          <button
-            className="btn btn-primary"
-            onClick={onScan}
-            disabled={scanning || loading}
-          >
-            {scanning ? (
-              <>
-                <div className="spinner dark" />
-                Scanning...
-              </>
-            ) : (
-              <>⟳ Run Scan</>
-            )}
-          </button>
-        </div>
+        <button className="btn btn-secondary" onClick={() => navigate("/findings")}>
+          View All Findings
+        </button>
       </div>
 
-      {/* Stat Cards */}
       {loading ? (
         <div className="loading-overlay">
           <div className="spinner" />
           <div className="loading-text">LOADING DASHBOARD...</div>
+        </div>
+      ) : findings.length === 0 ? (
+        /* ── Empty state — no scan run yet ── */
+        <div style={{
+          display: "flex",
+          flexDirection: "column",
+          alignItems: "center",
+          justifyContent: "center",
+          padding: "80px 20px",
+          gap: 16,
+          textAlign: "center",
+        }}>
+          <div style={{
+            width: 64,
+            height: 64,
+            borderRadius: "50%",
+            background: "var(--bg-elevated)",
+            border: "1px solid var(--border)",
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+            fontSize: 28,
+          }}>
+            🛡
+          </div>
+          <div style={{ fontSize: 18, fontWeight: 700, color: "var(--text-primary)" }}>
+            No scan results yet
+          </div>
+          <div style={{ fontSize: 13, color: "var(--text-secondary)", maxWidth: 400, lineHeight: 1.6 }}>
+            Go to the <strong style={{ color: "var(--accent-cyan)" }}>Scan</strong> page, enter a target AWS account ID, and run a compliance scan to see findings here.
+          </div>
+          <button className="btn btn-primary" style={{ marginTop: 8 }} onClick={() => navigate("/scan")}>
+            Go to Scan →
+          </button>
         </div>
       ) : (
         <>
@@ -72,17 +103,14 @@ export default function Dashboard({ findings, loading, scanning, onScan }) {
             ))}
           </div>
 
-          {/* Charts */}
           <div className="charts-grid">
             <SeverityDonut stats={stats} />
             <ScannerBarChart scanners={stats.scanners} />
           </div>
 
-          {/* Bottom Row */}
           <div className="charts-grid">
             <ComplianceScore findings={findings} />
 
-            {/* Recent Findings Quick View */}
             <div className="card" style={{ height: "280px", display: "flex", flexDirection: "column" }}>
               <div className="card-header">
                 <span className="card-title">Recent Critical Findings</span>
@@ -154,7 +182,6 @@ export default function Dashboard({ findings, loading, scanning, onScan }) {
             </div>
           </div>
 
-          {/* Compliance Framework Summary */}
           <div className="card" style={{ marginTop: 16 }}>
             <div className="card-header">
               <span className="card-title">Compliance Framework Coverage</span>
