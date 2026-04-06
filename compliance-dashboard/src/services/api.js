@@ -51,5 +51,13 @@ export const listReports = async () => {
 };
 
 export const getReportDownloadUrl = (filename) => `${CSV_BUCKET_URL}${filename}`;
+export const getHistory = (userId) => {
+  return api.get(`/history?userId=${userId}`);
+};
+
+
+export const saveHistory = (historyData) => {
+  return api.post("/history", historyData);
+};
 
 export default api;

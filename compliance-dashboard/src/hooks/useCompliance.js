@@ -1,5 +1,5 @@
-import { useState, useCallback } from "react";
-import { getFindings, runScan } from "../services/api";
+import { useState, useCallback, useEffect } from "react";
+import { getFindings, runScan, getHistory, saveHistory } from "../services/api";
 
 // Findings are NOT auto-fetched on mount.
 // They are only fetched after a scan completes, scoped to the target accountId.
@@ -152,40 +152,50 @@ export function useFilter(findings) {
 
 // ── Scan History — stored in localStorage per userId ─────────────────────────
 // Each entry: { id, accountId, timestamp, findingsCount, complianceScore }
-
+// ── Scan History — stored in DynamoDB per userId ─────────────────────────
 export function useScanHistory(userId) {
-  const storageKey = userId ? `csc_scan_history_${userId}` : null;
+  const [history, setHistory] = useState([]);
 
-  const getHistory = useCallback(() => {
-    if (!storageKey) return [];
-    try {
-      return JSON.parse(localStorage.getItem(storageKey) || "[]");
-    } catch {
-      return [];
-    }
-  }, [storageKey]);
+  // 1. Fetch from the cloud when the user logs in
+  useEffect(() => {
+    if (!userId) return;
+    
+    getHistory(userId)
+      .then((res) => {
+        // Sort newest first just in case DynamoDB didn't
+        const sorted = (res.data || []).sort((a, b) => new Date(b.timestamp) - new Date(a.timestamp));
+        setHistory(sorted);
+      })
+      .catch((err) => console.error("Failed to fetch cloud history:", err));
+  }, [userId]);
 
-  const [history, setHistory] = useState(() => getHistory());
-
+  // 2. Save to the cloud when a scan finishes
   const addScanRecord = useCallback((accountId, findingsCount, complianceScore) => {
-    if (!storageKey) return;
-    const record = {
-      id:              Date.now().toString(),
+    if (!userId) return;
+
+    const newRecord = {
+      id: Date.now().toString(),
+      userId: userId, // Required for DynamoDB partition key
       accountId,
-      timestamp:       new Date().toISOString(),
+      timestamp: new Date().toISOString(),
       findingsCount,
       complianceScore,
+      status: "Success"
     };
-    const updated = [record, ...getHistory()].slice(0, 20); // keep last 20
-    localStorage.setItem(storageKey, JSON.stringify(updated));
-    setHistory(updated);
-  }, [storageKey, getHistory]);
 
+    // Optimistic UI update (shows instantly for the user)
+    setHistory((prev) => [newRecord, ...prev]);
+
+    // Send it to the backend
+    saveHistory(newRecord).catch((err) => 
+      console.error("Failed to save history to cloud:", err)
+    );
+  }, [userId]);
+
+  // 3. Clear local state only (on logout)
   const clearHistory = useCallback(() => {
-    if (!storageKey) return;
-    localStorage.removeItem(storageKey);
     setHistory([]);
-  }, [storageKey]);
+  }, []);
 
   return { history, addScanRecord, clearHistory };
 }
