@@ -1,5 +1,5 @@
 import React, { createContext, useContext, useState } from "react";
-import { Routes, Route } from "react-router-dom";
+import { Routes, Route, useNavigate } from "react-router-dom";
 
 import Topbar from "./components/layout/Topbar";
 import Sidebar from "./components/layout/Sidebar";
@@ -24,6 +24,7 @@ export default function App() {
 
   const { findings, loading, error, lastUpdated, scannedAccountId, refetch, clearFindings } = useFindings();
   const { toasts, addToast, removeToast } = useToast();
+  const navigate = useNavigate();
 
   // After scan completes, fetch findings scoped to the target accountId
   const { scanning, scanLog, triggerScan } = useScan((accountId) => {
@@ -54,13 +55,17 @@ export default function App() {
     );
   };
 
-  const handleLogin = () => setUser(getCurrentUser());
+  const handleLogin = () => {
+    setUser(getCurrentUser());
+    navigate("/");
+  }
 
   const handleSignOut = () => {
     signOut();
     clearFindings();
     // clearHistory();
     setUser(null);
+    navigate("/");
   };
 
   if (!user) {

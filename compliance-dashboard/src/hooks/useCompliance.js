@@ -150,7 +150,7 @@ export function useFilter(findings) {
 }
 
 
-// ── Scan History — stored in localStorage per userId ─────────────────────────
+
 // Each entry: { id, accountId, timestamp, findingsCount, complianceScore }
 // ── Scan History — stored in DynamoDB per userId ─────────────────────────
 export function useScanHistory(userId) {
@@ -158,6 +158,7 @@ export function useScanHistory(userId) {
 
   // 1. Fetch from the cloud when the user logs in
   useEffect(() => {
+    setHistory([]);
     if (!userId) return;
     
     getHistory(userId)
