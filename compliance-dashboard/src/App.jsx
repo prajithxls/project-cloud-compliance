@@ -10,9 +10,10 @@ import Dashboard    from "./pages/Dashboard";
 import FindingsPage from "./pages/FindingsPage";
 import ScanPage     from "./pages/ScanPage";
 import ReportsPage  from "./pages/ReportsPage";
+import HistoryPage from "./pages/HistoryPage";
 
-import { useFindings, useScan, useToast } from "./hooks/useCompliance";
-import { computeStats } from "./utils/helpers";
+import { useFindings, useScan, useToast, useScanHistory } from "./hooks/useCompliance";
+import { computeStats, computeComplianceScore } from "./utils/helpers";
 import { getCurrentUser, signOut } from "./services/auth";
 
 const AppContext = createContext(null);
@@ -26,10 +27,18 @@ export default function App() {
 
   // After scan completes, fetch findings scoped to the target accountId
   const { scanning, scanLog, triggerScan } = useScan((accountId) => {
-    setTimeout(() => refetch(accountId), 2000);
+    setTimeout(() => {
+      refetch(accountId).then ? refetch(accountId) : refetch(accountId);
+      // Record scan in history after a short delay to let findings load
+      setTimeout(() => {
+        const score = computeComplianceScore(findings);
+        addScanRecord(accountId, findings.length, score);
+      }, 3000);
+    }, 2000);
     addToast(`Scan completed for account ${accountId}. Findings refreshed.`, "success");
   });
 
+  const { history: scanHistory, addScanRecord, clearHistory } = useScanHistory(user?.userId);
   const stats = computeStats(findings);
 
   // accountId must always be a 12-digit target account — no own-account scanning
@@ -49,7 +58,8 @@ export default function App() {
 
   const handleSignOut = () => {
     signOut();
-    clearFindings(); // wipe findings from memory on logout
+    clearFindings();
+    // clearHistory();
     setUser(null);
   };
 
@@ -58,7 +68,7 @@ export default function App() {
   }
 
   return (
-    <AppContext.Provider value={{ findings, loading, stats, addToast, scannedAccountId }}>
+    <AppContext.Provider value={{ findings, loading, stats, addToast, scannedAccountId, scanHistory, addScanRecord }}>
       <div className="app-shell">
         <Topbar
           scanning={scanning}
@@ -118,6 +128,7 @@ export default function App() {
                 scannedAccountId={scannedAccountId}
               />
             } />
+            <Route path="/history" element={<HistoryPage />} />
           </Routes>
         </main>
 

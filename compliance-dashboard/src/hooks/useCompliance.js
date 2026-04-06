@@ -149,6 +149,47 @@ export function useFilter(findings) {
   };
 }
 
+
+// ── Scan History — stored in localStorage per userId ─────────────────────────
+// Each entry: { id, accountId, timestamp, findingsCount, complianceScore }
+
+export function useScanHistory(userId) {
+  const storageKey = userId ? `csc_scan_history_${userId}` : null;
+
+  const getHistory = useCallback(() => {
+    if (!storageKey) return [];
+    try {
+      return JSON.parse(localStorage.getItem(storageKey) || "[]");
+    } catch {
+      return [];
+    }
+  }, [storageKey]);
+
+  const [history, setHistory] = useState(() => getHistory());
+
+  const addScanRecord = useCallback((accountId, findingsCount, complianceScore) => {
+    if (!storageKey) return;
+    const record = {
+      id:              Date.now().toString(),
+      accountId,
+      timestamp:       new Date().toISOString(),
+      findingsCount,
+      complianceScore,
+    };
+    const updated = [record, ...getHistory()].slice(0, 20); // keep last 20
+    localStorage.setItem(storageKey, JSON.stringify(updated));
+    setHistory(updated);
+  }, [storageKey, getHistory]);
+
+  const clearHistory = useCallback(() => {
+    if (!storageKey) return;
+    localStorage.removeItem(storageKey);
+    setHistory([]);
+  }, [storageKey]);
+
+  return { history, addScanRecord, clearHistory };
+}
+
 export function useToast() {
   const [toasts, setToasts] = useState([]);
   const addToast = useCallback((message, type = "info", duration = 4000) => {

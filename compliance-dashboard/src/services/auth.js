@@ -60,6 +60,14 @@ export async function signIn(email, password) {
   localStorage.setItem("csc_access_token",  tokens.AccessToken);
   localStorage.setItem("csc_refresh_token", tokens.RefreshToken);
   localStorage.setItem("csc_email",         email);
+
+  // Extract Cognito sub (unique user ID) from ID token
+  try {
+    const payload = JSON.parse(atob(tokens.IdToken.split(".")[1]));
+    const userId  = payload.sub; // UUID — unique per user, never changes
+    localStorage.setItem("csc_user_id", userId);
+  } catch {}
+
   return tokens;
 }
 
@@ -69,6 +77,7 @@ export function signOut() {
   localStorage.removeItem("csc_access_token");
   localStorage.removeItem("csc_refresh_token");
   localStorage.removeItem("csc_email");
+  localStorage.removeItem("csc_user_id");
 }
 
 // ── Get current user ──────────────────────────────────────────────────────────
@@ -80,10 +89,16 @@ export function getCurrentUser() {
   try {
     const payload = JSON.parse(atob(token.split(".")[1]));
     if (payload.exp * 1000 < Date.now()) { signOut(); return null; }
-    return { email, token };
+    const userId = localStorage.getItem("csc_user_id");
+    return { email, token, userId };
   } catch {
     return null;
   }
+}
+
+// ── Get unique user ID (Cognito sub) ─────────────────────────────────────────
+export function getUserId() {
+  return localStorage.getItem("csc_user_id") || null;
 }
 
 // ── Forgot Password ───────────────────────────────────────────────────────────

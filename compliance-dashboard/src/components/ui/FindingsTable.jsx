@@ -169,11 +169,9 @@ function FindingRow({ finding: f }) {
         </span>
       </td>
 
-      {/* Title */}
-      <td style={{ color: "var(--text-primary)", maxWidth: 240 }}>
-        <div style={{ overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap", maxWidth: 240 }}>
-          {f.title || "—"}
-        </div>
+      {/* Title — truncated, expands on hover */}
+      <td style={{ color: "var(--text-primary)", maxWidth: 300 }}>
+        <TruncatedCell value={f.title || "—"} maxChars={35} mono={false} />
       </td>
 
       {/* Status */}

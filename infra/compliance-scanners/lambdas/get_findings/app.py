@@ -5,6 +5,7 @@ import csv
 import io
 from datetime import datetime
 from decimal import Decimal
+from boto3.dynamodb.conditions import Attr
 
 CORS_HEADERS = {
     "Access-Control-Allow-Origin": "*",
@@ -75,12 +76,16 @@ def delete_old_csvs():
         print(f"Could not delete old CSVs: {str(e)}")
 
 
-def fetch_all_findings():
-    """Scan DynamoDB with pagination."""
-    response = table.scan()
+def fetch_findings_for_account(account_id):
+    """Scan DynamoDB filtered by accountId with pagination."""
+    filter_expr = Attr("accountId").eq(account_id)
+    response = table.scan(FilterExpression=filter_expr)
     findings = response.get("Items", [])
     while "LastEvaluatedKey" in response:
-        response = table.scan(ExclusiveStartKey=response["LastEvaluatedKey"])
+        response = table.scan(
+            FilterExpression=filter_expr,
+            ExclusiveStartKey=response["LastEvaluatedKey"]
+        )
         findings.extend(response.get("Items", []))
     return decimal_to_native(findings)
 
@@ -90,15 +95,41 @@ def lambda_handler(event, context):
     if event.get("httpMethod") == "OPTIONS":
         return {"statusCode": 200, "headers": CORS_HEADERS, "body": ""}
 
+    # ── Require accountId on every call ──────────────────────────────────────
+    account_id = (event.get("queryStringParameters") or {}).get("accountId", "").strip()
+
+    if not account_id:
+        return {
+            "statusCode": 400,
+            "headers": CORS_HEADERS,
+            "body": json.dumps({
+                "message": "accountId query parameter is required",
+                "findings": [],
+                "total": 0,
+            })
+        }
+
+    if len(account_id) != 12 or not account_id.isdigit():
+        return {
+            "statusCode": 400,
+            "headers": CORS_HEADERS,
+            "body": json.dumps({
+                "message": "accountId must be exactly 12 digits",
+                "findings": [],
+                "total": 0,
+            })
+        }
+
     # Detect whether this is a /refresh call or a /findings call
     path = event.get("path", "")
     is_refresh = path.endswith("/refresh")
 
     try:
-        findings = fetch_all_findings()
+        findings = fetch_findings_for_account(account_id)
+        print(f"Fetched {len(findings)} findings for account {account_id}")
 
         if is_refresh:
-            # /refresh → delete old CSVs, generate fresh one, return summary
+            # /refresh → delete old CSVs, generate fresh one scoped to this account
             if not CSV_BUCKET:
                 return {
                     "statusCode": 500,
@@ -106,14 +137,11 @@ def lambda_handler(event, context):
                     "body": json.dumps({"message": "CSV_BUCKET env var not set"})
                 }
 
-            # 1. Delete all old CSVs
             delete_old_csvs()
 
-            # 2. Generate new CSV
             csv_data = generate_csv(findings)
-            file_name = f"compliance_{datetime.utcnow().strftime('%Y%m%d_%H%M%S')}.csv"
+            file_name = f"compliance_{account_id}_{datetime.utcnow().strftime('%Y%m%d_%H%M%S')}.csv"
 
-            # 3. Upload to S3
             s3.put_object(
                 Bucket=CSV_BUCKET,
                 Key=file_name,
@@ -129,16 +157,17 @@ def lambda_handler(event, context):
                     "message": "Report generated successfully",
                     "csvFile": file_name,
                     "totalFindings": len(findings),
+                    "accountId": account_id,
                     "bucket": CSV_BUCKET
                 })
             }
 
         else:
-            # /findings → just return findings, also upload CSV silently
+            # /findings → return findings scoped to this account, also upload CSV silently
             if CSV_BUCKET:
                 try:
                     csv_data = generate_csv(findings)
-                    file_name = f"compliance_{datetime.utcnow().strftime('%Y%m%d_%H%M%S')}.csv"
+                    file_name = f"compliance_{account_id}_{datetime.utcnow().strftime('%Y%m%d_%H%M%S')}.csv"
                     s3.put_object(
                         Bucket=CSV_BUCKET,
                         Key=file_name,
@@ -154,6 +183,7 @@ def lambda_handler(event, context):
                 "body": json.dumps({
                     "findings": findings,
                     "total": len(findings),
+                    "accountId": account_id,
                 })
             }
 

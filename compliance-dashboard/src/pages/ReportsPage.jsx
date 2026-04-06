@@ -386,7 +386,7 @@ export default function ReportsPage({ findings, addToast, scannedAccountId }) {
             display: "flex", alignItems: "center", justifyContent: "center",
             fontSize: 28,
           }}>
-            📋
+            🗐
           </div>
           <div style={{ fontSize: 18, fontWeight: 700, color: "var(--text-primary)" }}>
             No reports available

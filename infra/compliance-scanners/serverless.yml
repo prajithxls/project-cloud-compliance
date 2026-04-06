@@ -61,7 +61,11 @@ provider:
         - lambda:GetPolicy
         - lambda:ListTags
       Resource: "*"
-
+    - Effect: Allow
+      Action:
+        - sts:AssumeRole
+      Resource: "arn:aws:iam::*:role/CrossAccountComplianceRole"
+      
 functions:
 
   scanAll:
