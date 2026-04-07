@@ -61,10 +61,9 @@ export default function App() {
     }
     // Clear previous findings before starting a new scan
     clearFindings();
-    triggerScan(accountId).catch(() =>
-      addToast("Scan failed. Check API connection.", "error")
-    );
-    addScanRecord(accountId, "nil", 0, "Failed");
+    triggerScan(accountId).catch(() =>{
+      addToast("Scan failed. Check API connection.", "error");
+    addScanRecord(accountId, "nil", 0, "Failed");});
   };
 
   const handleLogin = () => {
