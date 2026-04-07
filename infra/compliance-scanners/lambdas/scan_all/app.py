@@ -2,6 +2,7 @@ import json
 import boto3
 import os
 from concurrent.futures import ThreadPoolExecutor, as_completed
+from boto3.dynamodb.conditions import Key
 
 CORS_HEADERS = {
     "Access-Control-Allow-Origin": "*",
@@ -10,12 +11,39 @@ CORS_HEADERS = {
 }
 
 lambda_client = boto3.client("lambda")
+sts_client = boto3.client("sts")
+dynamodb = boto3.resource("dynamodb")
 
-S3_FN     = os.environ.get("S3_SCANNER_FUNCTION",     "compliance-scanners-dev-s3Scanner")
-EC2_FN    = os.environ.get("EC2_SCANNER_FUNCTION",    "compliance-scanners-dev-ec2Scanner")
-IAM_FN    = os.environ.get("IAM_SCANNER_FUNCTION",    "compliance-scanners-dev-iamScanner")
-LAMBDA_FN = os.environ.get("LAMBDA_SCANNER_FUNCTION", "compliance-scanners-dev-lambdaScanner")
+# Environment Variables
+S3_FN          = os.environ.get("S3_SCANNER_FUNCTION",     "compliance-scanners-dev-s3Scanner")
+EC2_FN         = os.environ.get("EC2_SCANNER_FUNCTION",    "compliance-scanners-dev-ec2Scanner")
+IAM_FN         = os.environ.get("IAM_SCANNER_FUNCTION",    "compliance-scanners-dev-iamScanner")
+LAMBDA_FN      = os.environ.get("LAMBDA_SCANNER_FUNCTION", "compliance-scanners-dev-lambdaScanner")
+FINDINGS_TABLE = os.environ.get("FINDINGS_TABLE",          "ComplianceFindings") # <-- Make sure this matches your DynamoDB table!
 
+def purge_old_findings(account_id):
+    """Deletes all existing findings for this account before running a new scan."""
+    table = dynamodb.Table(FINDINGS_TABLE)
+    try:
+        # 1. Find all old records
+        response = table.query(
+            KeyConditionExpression=Key('accountId').eq(account_id)
+        )
+        items = response.get('Items', [])
+
+        # 2. Delete them in batches
+        if items:
+            with table.batch_writer() as batch:
+                for item in items:
+                    batch.delete_item(
+                        Key={
+                            'accountId': item['accountId'],
+                            'findingId': item['findingId']
+                        }
+                    )
+            print(f"Purged {len(items)} old findings for account {account_id}")
+    except Exception as e:
+        print(f"Error purging findings: {str(e)}")
 
 def invoke_scanner(name, fn, target_account):
     try:
@@ -37,7 +65,6 @@ def invoke_scanner(name, fn, target_account):
 
 
 def lambda_handler(event, context):
-
     if event.get("httpMethod") == "OPTIONS":
         return {"statusCode": 200, "headers": CORS_HEADERS, "body": ""}
 
@@ -63,6 +90,31 @@ def lambda_handler(event, context):
     scan_account = target_account if is_cross_account else own_account
 
     print(f"Scanning account: {scan_account} | Cross-account: {is_cross_account}")
+
+    # ── 1. FAIL FAST: Check STS AssumeRole BEFORE scanning ──
+    if is_cross_account:
+        try:
+            sts_client.assume_role(
+                RoleArn=f"arn:aws:iam::{target_account}:role/CrossAccountComplianceRole",
+                RoleSessionName="ComplianceScanCheck"
+            )
+        except Exception as e:
+            print(f"Failed to assume role: {str(e)}")
+            
+            # Wipe old data anyway so the frontend doesn't show ghost data
+            purge_old_findings(scan_account) 
+            
+            # Send the 403 Forbidden Error back to React
+            return {
+                "statusCode": 403,
+                "headers": CORS_HEADERS,
+                "body": json.dumps({
+                    "message": f"Access Denied: Could not assume CrossAccountComplianceRole in account {target_account}. The role may have been deleted or modified."
+                })
+            }
+
+    # ── 2. PURGE OLD DATA (If STS succeeds, clear out the last scan) ──
+    purge_old_findings(scan_account)
 
     scanners = [
         ("s3",     S3_FN),

@@ -1,30 +1,37 @@
 /* ===== CLOUDGUARD DESIGN SYSTEM ===== */
+/* ===== CLOUDGUARD DESIGN SYSTEM (STEALTH MONOCHROME) ===== */
 :root {
-  --bg-base: #080b11;
-  --bg-surface: #0d1117;
-  --bg-elevated: #111820;
-  --bg-hover: #161e29;
-  --border: #1e2d3d;
-  --border-bright: #2a3f55;
+  /* Backgrounds: Pure black to light black */
+  --bg-base: #000000;
+  --bg-surface: #0a0a0a;
+  --bg-elevated: #141414;
+  --bg-hover: #1f1f1f;
+  
+  /* Borders: Subtle grays */
+  --border: #27272a;
+  --border-bright: #3f3f46;
 
-  --text-primary: #e8f4fd;
-  --text-secondary: #7a9ab8;
-  --text-muted: #3d5872;
+  /* Text: Clean whites and grays */
+  --text-primary: #ffffff;
+  --text-secondary: #a1a1aa;
+  --text-muted: #52525b;
 
-  --accent-cyan: #00d4ff;
-  --accent-cyan-dim: rgba(0, 212, 255, 0.12);
-  --accent-cyan-glow: rgba(0, 212, 255, 0.25);
+  /* Accent: Replaces Cyan with crisp White/Silver for high contrast */
+  --accent-cyan: #ffffff;
+  --accent-cyan-dim: rgba(255, 255, 255, 0.12);
+  --accent-cyan-glow: rgba(255, 255, 255, 0.25);
 
-  --critical: #ff3b5c;
-  --critical-dim: rgba(255, 59, 92, 0.12);
-  --high: #ff6b2b;
-  --high-dim: rgba(255, 107, 43, 0.12);
-  --medium: #ffb800;
-  --medium-dim: rgba(255, 184, 0, 0.12);
-  --low: #00d88a;
-  --low-dim: rgba(0, 216, 138, 0.12);
-  --info: #6b8cff;
-  --info-dim: rgba(107, 140, 255, 0.12);
+  /* Status Colors: Muted down slightly to fit the dark aesthetic */
+  --critical: #ef4444;
+  --critical-dim: rgba(239, 68, 68, 0.12);
+  --high: #f97316;
+  --high-dim: rgba(249, 115, 22, 0.12);
+  --medium: #eab308;
+  --medium-dim: rgba(234, 179, 8, 0.12);
+  --low: #22c55e;
+  --low-dim: rgba(34, 197, 94, 0.12);
+  --info: #a1a1aa;
+  --info-dim: rgba(161, 161, 170, 0.12);
 
   --font-display: 'Syne', sans-serif;
   --font-mono: 'Space Mono', monospace;
@@ -34,15 +41,56 @@
   --radius-lg: 12px;
   --radius-xl: 16px;
 
-  --shadow-sm: 0 1px 3px rgba(0,0,0,0.4);
-  --shadow-md: 0 4px 16px rgba(0,0,0,0.5);
-  --shadow-lg: 0 8px 32px rgba(0,0,0,0.6);
-  --shadow-glow-cyan: 0 0 20px rgba(0, 212, 255, 0.15);
+  --shadow-sm: 0 1px 3px rgba(0,0,0,0.6);
+  --shadow-md: 0 4px 16px rgba(0,0,0,0.8);
+  --shadow-lg: 0 8px 32px rgba(0,0,0,0.9);
+  
+  /* Swapped the cyan glow for a subtle silver glow */
+  --shadow-glow-cyan: 0 0 20px rgba(255, 255, 255, 0.15);
 
   --sidebar-width: 240px;
   --topbar-height: 60px;
+  body, 
+.card, 
+.topbar, 
+.sidebar, 
+.main-content,
+button, 
+input {
+  transition: background-color 0.4s ease, 
+              color 0.4s ease, 
+              border-color 0.4s ease, 
+              box-shadow 0.4s ease;
 }
+}
+/* ===== LIGHT MODE OVERRIDE (High Contrast Monochrome) ===== */
+[data-theme="light"] {
+  /* Backgrounds: Crisp whites and ultra-light grays */
+  --bg-base: #f4f4f5;
+  --bg-surface: #ffffff;
+  --bg-elevated: #ffffff;
+  --bg-hover: #e4e4e7;
+  
+  /* Borders: Soft grays */
+  --border: #e4e4e7;
+  --border-bright: #d4d4d8;
 
+  /* Text: Deep blacks and readable grays */
+  --text-primary: #09090b;
+  --text-secondary: #52525b;
+  --text-muted: #a1a1aa;
+
+  /* Accent: Pitch black for maximum contrast */
+  --accent-cyan: #000000;
+  --accent-cyan-dim: rgba(0, 0, 0, 0.06);
+  --accent-cyan-glow: rgba(0, 0, 0, 0.1);
+
+  /* Adjust shadow for light mode */
+  --shadow-sm: 0 1px 3px rgba(0,0,0,0.05);
+  --shadow-md: 0 4px 16px rgba(0,0,0,0.08);
+  --shadow-lg: 0 8px 32px rgba(0,0,0,0.12);
+  --shadow-glow-cyan: 0 0 20px rgba(0, 0, 0, 0.05);
+}
 *, *::before, *::after {
   box-sizing: border-box;
   margin: 0;
@@ -102,7 +150,7 @@ body {
 .topbar-logo-icon {
   width: 32px;
   height: 32px;
-  background: linear-gradient(135deg, #00d4ff, #0088aa);
+  background: linear-gradient(135deg, #3f3f46, #18181b);
   border-radius: var(--radius-sm);
   display: flex;
   align-items: center;

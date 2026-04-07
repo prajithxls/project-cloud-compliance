@@ -1,4 +1,4 @@
-import React, { createContext, useContext, useState } from "react";
+import React, { createContext, useContext, useState, useEffect } from "react";
 import { Routes, Route, useNavigate } from "react-router-dom";
 
 import Topbar from "./components/layout/Topbar";
@@ -22,23 +22,34 @@ export const useApp = () => useContext(AppContext);
 export default function App() {
   const [user, setUser] = useState(() => getCurrentUser());
 
+  // ── THEME STATE (Only new addition) ────────────────────────────────────────
+  const [theme, setTheme] = useState(() => localStorage.getItem("csc_theme") || "dark");
+
+  useEffect(() => {
+    document.documentElement.setAttribute("data-theme", theme);
+    localStorage.setItem("csc_theme", theme);
+  }, [theme]);
+  // ───────────────────────────────────────────────────────────────────────────
+
   const { findings, loading, error, lastUpdated, scannedAccountId, refetch, clearFindings } = useFindings();
   const { toasts, addToast, removeToast } = useToast();
   const navigate = useNavigate();
 
   // After scan completes, fetch findings scoped to the target accountId
-  const { scanning, scanLog, triggerScan } = useScan((accountId) => {
-    setTimeout(() => {
-      refetch(accountId).then ? refetch(accountId) : refetch(accountId);
-      // Record scan in history after a short delay to let findings load
-      setTimeout(() => {
-        const score = computeComplianceScore(findings);
-        addScanRecord(accountId, findings.length, score);
-      }, 3000);
-    }, 2000);
-    addToast(`Scan completed for account ${accountId}. Findings refreshed.`, "success");
+  const { scanning, scanLog, triggerScan } = useScan(async (accountId) => {
+    // 1. Wait 8 seconds to give AWS time to finish scanning and writing to DynamoDB
+    await new Promise(resolve => setTimeout(resolve, 8000));
+    
+    // 2. NOW fetch the findings (they will be ready!)
+    const freshFindings = await refetch(accountId) || [];
+    
+    // 3. Calculate score and save the correct count to History
+    const score = computeComplianceScore(freshFindings);
+    addScanRecord(accountId, freshFindings.length, score);
+    
+    addToast(`Scan completed. ${freshFindings.length} findings found.`, "success");
   });
-
+  
   const { history: scanHistory, addScanRecord, clearHistory } = useScanHistory(user?.userId);
   const stats = computeStats(findings);
 
@@ -53,6 +64,7 @@ export default function App() {
     triggerScan(accountId).catch(() =>
       addToast("Scan failed. Check API connection.", "error")
     );
+    addScanRecord(accountId, "nil", 0, "Failed");
   };
 
   const handleLogin = () => {
@@ -80,6 +92,8 @@ export default function App() {
           lastUpdated={lastUpdated}
           user={user}
           onSignOut={handleSignOut}
+          theme={theme}        // 👈 Passed theme to Topbar
+          setTheme={setTheme}  // 👈 Passed setTheme to Topbar
         />
         <Sidebar criticalCount={stats.CRITICAL} />
 

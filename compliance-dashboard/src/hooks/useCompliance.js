@@ -21,6 +21,7 @@ export function useFindings() {
       setFindings(items);
       setScannedAccountId(accountId);
       setLastUpdated(new Date());
+      return items;
     } catch (err) {
       setError(err.message);
     } finally {
@@ -171,7 +172,7 @@ export function useScanHistory(userId) {
   }, [userId]);
 
   // 2. Save to the cloud when a scan finishes
-  const addScanRecord = useCallback((accountId, findingsCount, complianceScore) => {
+  const addScanRecord = useCallback((accountId, findingsCount, complianceScore,status = "Success") => {
     if (!userId) return;
 
     const newRecord = {
@@ -181,7 +182,7 @@ export function useScanHistory(userId) {
       timestamp: new Date().toISOString(),
       findingsCount,
       complianceScore,
-      status: "Success"
+      status: status
     };
 
     // Optimistic UI update (shows instantly for the user)

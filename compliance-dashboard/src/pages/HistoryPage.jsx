@@ -41,6 +41,7 @@ export default function HistoryPage() {
               <tr style={{ borderBottom: "1px solid var(--border)", color: "var(--text-muted)", fontSize: 11, fontFamily: "var(--font-mono)" }}>
                 <th style={{ padding: "12px 16px", fontWeight: "normal" }}>DATE & TIME</th>
                 <th style={{ padding: "12px 16px", fontWeight: "normal" }}>TARGET ACCOUNT</th>
+                <th style={{ padding: "12px 16px", fontWeight: "normal" }}>FINDINGS</th>
                 <th style={{ padding: "12px 16px", fontWeight: "normal" }}>STATUS</th>
               </tr>
             </thead>
@@ -58,15 +59,35 @@ export default function HistoryPage() {
                     <td style={{ padding: "16px", fontFamily: "var(--font-mono)", fontSize: 13, color: "var(--accent-cyan)" }}>
                       {record.accountId}
                     </td>
+                   {/* Findings Column */}
+                    <td style={{ padding: "16px", fontSize: 13, color: "var(--text-primary)", fontWeight: 500 }}>
+                      {record.status === "Failed" || record.findingsCount === "nil" 
+                        ? <span style={{ color: "var(--text-muted)" }}>nil</span>
+                        : record.findingsCount !== undefined ? `${record.findingsCount} issues` : "—"}
+                    </td>
+                    
+                    {/* Status Column */}
+                    {/* Status Column */}
                     <td style={{ padding: "16px" }}>
-                      <span style={{
-                        display: "inline-flex", alignItems: "center", gap: 6,
-                        padding: "4px 10px", borderRadius: "20px",
-                        background: "var(--bg-elevated)", border: "1px solid var(--low)33",
-                        fontSize: 11, fontFamily: "var(--font-mono)", color: "var(--low)"
-                      }}>
-                        <span style={{ color: "var(--low)" }}>✓</span> Success
-                      </span>
+                      {record.status === "Failed" ? (
+                        <span style={{
+                          display: "inline-flex", alignItems: "center", justifyContent: "center", gap: 6,
+                          padding: "4px 10px", borderRadius: "20px", minWidth: "85px", /* 👈 Forces equal size */
+                          background: "var(--critical-dim)", border: "1px solid rgba(239, 68, 68, 0.3)",
+                          fontSize: 10, fontFamily: "var(--font-mono)", color: "var(--critical)"
+                        }}>
+                          <span>✕</span> Failed
+                        </span>
+                      ) : (
+                        <span style={{
+                          display: "inline-flex", alignItems: "center", justifyContent: "center", gap: 6,
+                          padding: "4px 10px", borderRadius: "20px", minWidth: "85px", /* 👈 Forces equal size */
+                          background: "var(--bg-elevated)", border: "1px solid var(--low)33",
+                          fontSize: 11, fontFamily: "var(--font-mono)", color: "var(--low)"
+                        }}>
+                          <span>✓</span> Success
+                        </span>
+                      )}
                     </td>
                   </tr>
                 );

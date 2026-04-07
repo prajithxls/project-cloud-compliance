@@ -93,14 +93,14 @@ export default function AuthPage({ onLogin }) {
     } finally { setLoading(false); }
   };
 
-  // ── SHARED STYLES ──────────────────────────────────────────────────────────
+  // ── STEALTH MONOCHROME STYLES ──────────────────────────────────────────────
   const inputStyle = {
     width: "100%",
     padding: "11px 14px",
-    background: "#0a1828",
-    border: "1px solid #1a3a5c",
+    background: "#000000",
+    border: "1px solid #27272a",
     borderRadius: 8,
-    color: "#e8f4fd",
+    color: "#ffffff",
     fontFamily: "var(--font-mono)",
     fontSize: 14,
     outline: "none",
@@ -111,25 +111,37 @@ export default function AuthPage({ onLogin }) {
   const labelStyle = {
     fontFamily: "var(--font-mono)",
     fontSize: 10,
-    color: "#4a7a9b",
+    color: "#a1a1aa",
     letterSpacing: "0.08em",
     marginBottom: 6,
     display: "block",
   };
 
+  const primaryButtonStyle = {
+    width: "100%", 
+    padding: "12px", 
+    fontSize: 14, 
+    background: "#ffffff", 
+    color: "#000000",
+    border: "none",
+    fontWeight: 700,
+    cursor: "pointer",
+    borderRadius: "var(--radius-md)"
+  };
+
   return (
     <div style={{
       minHeight: "100vh",
-      background: "#060f1a",
+      background: "#000000",
       display: "flex",
       alignItems: "center",
       justifyContent: "center",
       padding: 20,
     }}>
-      {/* Background grid effect */}
+      {/* Subtle grid background */}
       <div style={{
-        position: "fixed", inset: 0, opacity: 0.03,
-        backgroundImage: "linear-gradient(#00d4ff 1px, transparent 1px), linear-gradient(90deg, #00d4ff 1px, transparent 1px)",
+        position: "fixed", inset: 0, opacity: 0.04,
+        backgroundImage: "linear-gradient(#ffffff 1px, transparent 1px), linear-gradient(90deg, #ffffff 1px, transparent 1px)",
         backgroundSize: "40px 40px",
         pointerEvents: "none",
       }} />
@@ -137,23 +149,23 @@ export default function AuthPage({ onLogin }) {
       <div style={{
         width: "100%",
         maxWidth: 420,
-        background: "#0a1828",
-        border: "1px solid #1a3a5c",
+        background: "#0a0a0a",
+        border: "1px solid #27272a",
         borderRadius: 16,
         overflow: "hidden",
-        boxShadow: "0 24px 80px rgba(0,0,0,0.6)",
+        boxShadow: "0 24px 80px rgba(0,0,0,0.8)",
         position: "relative",
       }}>
         {/* Top accent line */}
-        <div style={{ height: 3, background: "linear-gradient(90deg, #00d4ff, #0066cc)" }} />
+        <div style={{ height: 3, background: "linear-gradient(90deg, #ffffff, #52525b)" }} />
 
         <div style={{ padding: "36px 36px 32px" }}>
           {/* Logo / Title */}
           <div style={{ textAlign: "center", marginBottom: 32 }}>
             <div style={{
               width: 52, height: 52,
-              background: "linear-gradient(135deg, #00d4ff22, #0066cc22)",
-              border: "1px solid #00d4ff44",
+              background: "linear-gradient(135deg, #18181b, #000000)",
+              border: "1px solid #27272a",
               borderRadius: 14,
               display: "flex", alignItems: "center", justifyContent: "center",
               fontSize: 24, margin: "0 auto 16px",
@@ -164,7 +176,7 @@ export default function AuthPage({ onLogin }) {
               fontFamily: "var(--font-display, monospace)",
               fontSize: 17,
               fontWeight: 800,
-              color: "#e8f4fd",
+              color: "#ffffff",
               letterSpacing: "0.02em",
               lineHeight: 1.3,
             }}>
@@ -173,7 +185,7 @@ export default function AuthPage({ onLogin }) {
             <div style={{
               fontFamily: "var(--font-mono, monospace)",
               fontSize: 10,
-              color: "#00d4ff",
+              color: "#a1a1aa",
               letterSpacing: "0.12em",
               marginTop: 4,
             }}>
@@ -185,7 +197,7 @@ export default function AuthPage({ onLogin }) {
           <div style={{
             fontFamily: "var(--font-mono, monospace)",
             fontSize: 11,
-            color: "#4a7a9b",
+            color: "#a1a1aa",
             letterSpacing: "0.1em",
             marginBottom: 20,
             textAlign: "center",
@@ -200,28 +212,28 @@ export default function AuthPage({ onLogin }) {
           {/* Error / Info */}
           {error && (
             <div style={{
-              background: "#2a0a14",
-              border: "1px solid #ff3b5c44",
+              background: "#2e0f0f",
+              border: "1px solid #ef444444",
               borderRadius: 8,
               padding: "10px 14px",
               marginBottom: 16,
               fontFamily: "var(--font-mono, monospace)",
               fontSize: 12,
-              color: "#ff6b8a",
+              color: "#ef4444",
             }}>
               ⚠ {error}
             </div>
           )}
           {info && (
             <div style={{
-              background: "#0a2a1a",
-              border: "1px solid #00c87a44",
+              background: "#0f2e1b",
+              border: "1px solid #22c55e44",
               borderRadius: 8,
               padding: "10px 14px",
               marginBottom: 16,
               fontFamily: "var(--font-mono, monospace)",
               fontSize: 12,
-              color: "#00c87a",
+              color: "#22c55e",
             }}>
               ✓ {info}
             </div>
@@ -234,31 +246,31 @@ export default function AuthPage({ onLogin }) {
                 <label style={labelStyle}>EMAIL ADDRESS</label>
                 <input style={inputStyle} type="email" placeholder="you@example.com"
                   value={email} onChange={e => setEmail(e.target.value)}
-                  onFocus={e => e.target.style.borderColor = "#00d4ff"}
-                  onBlur={e => e.target.style.borderColor = "#1a3a5c"}
+                  onFocus={e => e.target.style.borderColor = "#ffffff"}
+                  onBlur={e => e.target.style.borderColor = "#27272a"}
                   onKeyDown={e => e.key === "Enter" && handleLogin()} />
               </div>
               <div>
                 <label style={labelStyle}>PASSWORD</label>
                 <input style={inputStyle} type="password" placeholder="••••••••"
                   value={password} onChange={e => setPassword(e.target.value)}
-                  onFocus={e => e.target.style.borderColor = "#00d4ff"}
-                  onBlur={e => e.target.style.borderColor = "#1a3a5c"}
+                  onFocus={e => e.target.style.borderColor = "#ffffff"}
+                  onBlur={e => e.target.style.borderColor = "#27272a"}
                   onKeyDown={e => e.key === "Enter" && handleLogin()} />
               </div>
               <div style={{ textAlign: "right", marginTop: -8 }}>
-                <span style={{ fontFamily: "var(--font-mono)", fontSize: 11, color: "#00d4ff", cursor: "pointer" }}
+                <span style={{ fontFamily: "var(--font-mono)", fontSize: 11, color: "#ffffff", cursor: "pointer" }}
                   onClick={() => { reset(); setView("forgot"); }}>
                   Forgot password?
                 </span>
               </div>
-              <button className="btn btn-primary" style={{ width: "100%", padding: "12px", fontSize: 14, marginTop: 4 }}
+              <button className="btn btn-primary" style={{ ...primaryButtonStyle, marginTop: 4 }}
                 onClick={handleLogin} disabled={loading}>
-                {loading ? <><div className="spinner dark" /> Signing in...</> : "→ Sign In"}
+                {loading ? "Signing in..." : "→ Sign In"}
               </button>
-              <div style={{ textAlign: "center", fontFamily: "var(--font-mono)", fontSize: 12, color: "#4a7a9b" }}>
+              <div style={{ textAlign: "center", fontFamily: "var(--font-mono)", fontSize: 12, color: "#a1a1aa" }}>
                 No account?{" "}
-                <span style={{ color: "#00d4ff", cursor: "pointer" }} onClick={() => { reset(); setView("signup"); }}>
+                <span style={{ color: "#ffffff", cursor: "pointer" }} onClick={() => { reset(); setView("signup"); }}>
                   Create one
                 </span>
               </div>
@@ -272,31 +284,31 @@ export default function AuthPage({ onLogin }) {
                 <label style={labelStyle}>EMAIL ADDRESS</label>
                 <input style={inputStyle} type="email" placeholder="you@example.com"
                   value={email} onChange={e => setEmail(e.target.value)}
-                  onFocus={e => e.target.style.borderColor = "#00d4ff"}
-                  onBlur={e => e.target.style.borderColor = "#1a3a5c"} />
+                  onFocus={e => e.target.style.borderColor = "#ffffff"}
+                  onBlur={e => e.target.style.borderColor = "#27272a"} />
               </div>
               <div>
                 <label style={labelStyle}>PASSWORD</label>
                 <input style={inputStyle} type="password" placeholder="Min. 8 characters"
                   value={password} onChange={e => setPassword(e.target.value)}
-                  onFocus={e => e.target.style.borderColor = "#00d4ff"}
-                  onBlur={e => e.target.style.borderColor = "#1a3a5c"} />
+                  onFocus={e => e.target.style.borderColor = "#ffffff"}
+                  onBlur={e => e.target.style.borderColor = "#27272a"} />
               </div>
               <div>
                 <label style={labelStyle}>CONFIRM PASSWORD</label>
                 <input style={inputStyle} type="password" placeholder="••••••••"
                   value={confirm} onChange={e => setConfirm(e.target.value)}
-                  onFocus={e => e.target.style.borderColor = "#00d4ff"}
-                  onBlur={e => e.target.style.borderColor = "#1a3a5c"}
+                  onFocus={e => e.target.style.borderColor = "#ffffff"}
+                  onBlur={e => e.target.style.borderColor = "#27272a"}
                   onKeyDown={e => e.key === "Enter" && handleSignUp()} />
               </div>
-              <button className="btn btn-primary" style={{ width: "100%", padding: "12px", fontSize: 14 }}
+              <button className="btn btn-primary" style={primaryButtonStyle}
                 onClick={handleSignUp} disabled={loading}>
-                {loading ? <><div className="spinner dark" /> Creating account...</> : "→ Create Account"}
+                {loading ? "Creating account..." : "→ Create Account"}
               </button>
-              <div style={{ textAlign: "center", fontFamily: "var(--font-mono)", fontSize: 12, color: "#4a7a9b" }}>
+              <div style={{ textAlign: "center", fontFamily: "var(--font-mono)", fontSize: 12, color: "#a1a1aa" }}>
                 Already have an account?{" "}
-                <span style={{ color: "#00d4ff", cursor: "pointer" }} onClick={() => { reset(); setView("login"); }}>
+                <span style={{ color: "#ffffff", cursor: "pointer" }} onClick={() => { reset(); setView("login"); }}>
                   Sign in
                 </span>
               </div>
@@ -306,26 +318,26 @@ export default function AuthPage({ onLogin }) {
           {/* ── VERIFY FORM ── */}
           {view === "verify" && (
             <div style={{ display: "flex", flexDirection: "column", gap: 16 }}>
-              <div style={{ textAlign: "center", fontFamily: "var(--font-mono)", fontSize: 12, color: "#4a7a9b", marginBottom: 4 }}>
+              <div style={{ textAlign: "center", fontFamily: "var(--font-mono)", fontSize: 12, color: "#a1a1aa", marginBottom: 4 }}>
                 A 6-digit code was sent to<br />
-                <span style={{ color: "#e8f4fd" }}>{email}</span>
+                <span style={{ color: "#ffffff" }}>{email}</span>
               </div>
               <div>
                 <label style={labelStyle}>VERIFICATION CODE</label>
                 <input style={{ ...inputStyle, fontSize: 22, textAlign: "center", letterSpacing: "0.3em" }}
                   type="text" placeholder="000000" maxLength={6}
                   value={code} onChange={e => setCode(e.target.value.replace(/\D/g, ""))}
-                  onFocus={e => e.target.style.borderColor = "#00d4ff"}
-                  onBlur={e => e.target.style.borderColor = "#1a3a5c"}
+                  onFocus={e => e.target.style.borderColor = "#ffffff"}
+                  onBlur={e => e.target.style.borderColor = "#27272a"}
                   onKeyDown={e => e.key === "Enter" && handleVerify()} />
               </div>
-              <button className="btn btn-primary" style={{ width: "100%", padding: "12px", fontSize: 14 }}
+              <button className="btn btn-primary" style={primaryButtonStyle}
                 onClick={handleVerify} disabled={loading}>
-                {loading ? <><div className="spinner dark" /> Verifying...</> : "✓ Verify Email"}
+                {loading ? "Verifying..." : "✓ Verify Email"}
               </button>
-              <div style={{ textAlign: "center", fontFamily: "var(--font-mono)", fontSize: 12, color: "#4a7a9b" }}>
+              <div style={{ textAlign: "center", fontFamily: "var(--font-mono)", fontSize: 12, color: "#a1a1aa" }}>
                 Didn't get it?{" "}
-                <span style={{ color: "#00d4ff", cursor: "pointer" }}
+                <span style={{ color: "#ffffff", cursor: "pointer" }}
                   onClick={() => resendCode(email).then(() => setInfo("Code resent!")).catch(e => setError(e.message))}>
                   Resend code
                 </span>
@@ -340,16 +352,16 @@ export default function AuthPage({ onLogin }) {
                 <label style={labelStyle}>EMAIL ADDRESS</label>
                 <input style={inputStyle} type="email" placeholder="you@example.com"
                   value={email} onChange={e => setEmail(e.target.value)}
-                  onFocus={e => e.target.style.borderColor = "#00d4ff"}
-                  onBlur={e => e.target.style.borderColor = "#1a3a5c"}
+                  onFocus={e => e.target.style.borderColor = "#ffffff"}
+                  onBlur={e => e.target.style.borderColor = "#27272a"}
                   onKeyDown={e => e.key === "Enter" && handleForgot()} />
               </div>
-              <button className="btn btn-primary" style={{ width: "100%", padding: "12px", fontSize: 14 }}
+              <button className="btn btn-primary" style={primaryButtonStyle}
                 onClick={handleForgot} disabled={loading}>
-                {loading ? <><div className="spinner dark" /> Sending...</> : "→ Send Reset Code"}
+                {loading ? "Sending..." : "→ Send Reset Code"}
               </button>
-              <div style={{ textAlign: "center", fontFamily: "var(--font-mono)", fontSize: 12, color: "#4a7a9b" }}>
-                <span style={{ color: "#00d4ff", cursor: "pointer" }} onClick={() => { reset(); setView("login"); }}>
+              <div style={{ textAlign: "center", fontFamily: "var(--font-mono)", fontSize: 12, color: "#a1a1aa" }}>
+                <span style={{ color: "#ffffff", cursor: "pointer" }} onClick={() => { reset(); setView("login"); }}>
                   ← Back to Sign In
                 </span>
               </div>
@@ -364,20 +376,20 @@ export default function AuthPage({ onLogin }) {
                 <input style={{ ...inputStyle, textAlign: "center", letterSpacing: "0.2em" }}
                   type="text" placeholder="000000" maxLength={6}
                   value={code} onChange={e => setCode(e.target.value.replace(/\D/g, ""))}
-                  onFocus={e => e.target.style.borderColor = "#00d4ff"}
-                  onBlur={e => e.target.style.borderColor = "#1a3a5c"} />
+                  onFocus={e => e.target.style.borderColor = "#ffffff"}
+                  onBlur={e => e.target.style.borderColor = "#27272a"} />
               </div>
               <div>
                 <label style={labelStyle}>NEW PASSWORD</label>
                 <input style={inputStyle} type="password" placeholder="Min. 8 characters"
                   value={newPass} onChange={e => setNewPass(e.target.value)}
-                  onFocus={e => e.target.style.borderColor = "#00d4ff"}
-                  onBlur={e => e.target.style.borderColor = "#1a3a5c"}
+                  onFocus={e => e.target.style.borderColor = "#ffffff"}
+                  onBlur={e => e.target.style.borderColor = "#27272a"}
                   onKeyDown={e => e.key === "Enter" && handleReset()} />
               </div>
-              <button className="btn btn-primary" style={{ width: "100%", padding: "12px", fontSize: 14 }}
+              <button className="btn btn-primary" style={primaryButtonStyle}
                 onClick={handleReset} disabled={loading}>
-                {loading ? <><div className="spinner dark" /> Resetting...</> : "✓ Reset Password"}
+                {loading ? "Resetting..." : "✓ Reset Password"}
               </button>
             </div>
           )}
